@@ -7,7 +7,7 @@ int main() {
 	if (NetConnect::Network::initialize()) {
 		std::cout << "Winsock Successfully Initialized" << std::endl;
 
-		NetConnect::IPEndpoint test("localhost", 8080);
+		NetConnect::IPEndpoint test("www.google.com", 8080);
 		if (test.getIPVersion() == NetConnect::IPVersion::IPv4) {
 			std::cout << "Hostname: " << test.getHostName() << std::endl;
 			std::cout << "IP: " << test.getIPString() << std::endl;
