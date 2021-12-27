@@ -1,2 +1,4 @@
 ﻿  IPEndpoint.cpp
+  Network.cpp
+  Socket.cpp
   NetConnect.vcxproj -> C:\Users\Jacob\Documents\Repositories\Personal\Sprints\Networking\NetConnect\Debug\NetConnect.lib

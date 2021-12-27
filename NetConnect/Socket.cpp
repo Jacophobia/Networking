@@ -11,7 +11,7 @@ namespace NetConnect {
 		assert(ipVersion == IPVersion::IPv4);
 	}
 
-	PResult Socket::Create()
+	PResult Socket::create()
 	{
 		assert(ipVersion == IPVersion::IPv4);
 
@@ -27,14 +27,14 @@ namespace NetConnect {
 			return PResult::P_NotYetImplemented;
 		}
 
-		if (SetSocketOption(SocketOption::TCP_NoDelay, TRUE) != PResult::P_Success) {
+		if (setSocketOption(SocketOption::TCP_NoDelay, TRUE) != PResult::P_Success) {
 			return PResult::P_NotYetImplemented;
 		}
 
 		return PResult::P_Success;
 	}
 
-	PResult Socket::Close()
+	PResult Socket::close()
 	{
 		if (handle == INVALID_SOCKET) {
 			return PResult::P_NotYetImplemented;
@@ -50,16 +50,83 @@ namespace NetConnect {
 		return PResult::P_Success;
 	}
 
-	SocketHandle Socket::GetHandle()
+	PResult Socket::bindEndpoint(IPEndpoint endpoint)
+	{
+		sockaddr_in addr = endpoint.getSockaddrIPv4();
+		
+		int bind_result = bind(handle, (sockaddr*) &addr, sizeof sockaddr_in);
+		if (bind_result != 0) {
+			int bind_error = WSAGetLastError();
+			return PResult::P_NotYetImplemented;
+		}
+		return PResult::P_Success;
+	}
+
+	PResult Socket::listenEndpoint(IPEndpoint endpoint, int backlog)
+	{
+		if (bindEndpoint(endpoint) != PResult::P_Success) {
+			return PResult::P_NotYetImplemented;
+		}
+
+		int listen_result = listen(handle, backlog);
+
+		if (listen_result != 0) {
+			int listen_error = WSAGetLastError();
+			std::cerr
+				<< "An error occurred while attempint to listen to endpoint"
+				<< "Error Code: " << listen_error << std::endl;
+			return PResult::P_NotYetImplemented;
+		}
+		return PResult::P_Success;
+	}
+
+	PResult Socket::acceptConnection(Socket& outSocket)
+	{
+		sockaddr_in addr = {};
+		int len = sizeof sockaddr_in;
+		SocketHandle acceptedConnectionHandle = accept(handle, (sockaddr*)&addr, &len);
+		if (acceptedConnectionHandle == INVALID_SOCKET) {
+			int accConHan_error = WSAGetLastError();
+			std::cerr
+				<< "Error accepting connection handle. Error code "
+				<< accConHan_error << std::endl;
+			return PResult::P_NotYetImplemented;
+		}
+
+		IPEndpoint newConnectionEndpoint((sockaddr*)&addr);
+
+		std::cout << "New Connection Created" << std::endl;
+		newConnectionEndpoint.displayValues();
+
+		outSocket = Socket(IPVersion::IPv4, acceptedConnectionHandle);
+		return PResult::P_Success;
+	}
+
+	PResult Socket::createConnection(IPEndpoint endpoint)
+	{
+		sockaddr_in addr = endpoint.getSockaddrIPv4();
+		int connection_result = connect(handle, (sockaddr*)&addr, sizeof sockaddr_in);
+
+		if (connection_result != 0) {
+			int connection_error = WSAGetLastError();
+			std::cerr
+				<< "Error forming a connection. Error Code "
+				<< connection_error << std::endl;
+			return PResult::P_NotYetImplemented;
+		}
+		return PResult::P_Success;
+	}
+
+	SocketHandle Socket::getHandle()
 	{
 		return handle;
 	}
 
-	IPVersion Socket::GetIPVersion()
+	IPVersion Socket::getIPVersion()
 	{
 		return ipVersion;
 	}
-	PResult Socket::SetSocketOption(SocketOption option, BOOL value)
+	PResult Socket::setSocketOption(SocketOption option, BOOL value)
 	{
 		int sockoptResult = 0;
 		switch (option)
